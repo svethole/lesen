@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesen</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/fonts.css">
+<link rel="stylesheet" href="/static/app.css">
+<meta name="theme-color" content="#e8ebe5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161b1f" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<header class="masthead">
+  <a class="brand" href="#/suche">Lesen</a>
+  <nav class="tabs" aria-label="Bereiche">
+    <a href="#/suche" data-view="search">Suchen</a>
+    <a href="#/bibliothek" data-view="library">Bibliothek</a>
+    <a href="#/einstellungen" data-view="settings">Einstellungen</a>
+  </nav>
+</header>
+
+<div class="layout" id="layout">
+  <main>
+    <!-- Suche -->
+    <section id="view-search" class="view">
+      <form class="searchbar" id="search-form" role="search">
+        <label class="sr-only" for="q">Wikipedia durchsuchen</label>
+        <input type="search" id="q" name="q" placeholder="Wikipedia durchsuchen" autocomplete="off" enterkeyhint="search" required>
+        <label class="sr-only" for="lang">Sprache</label>
+        <select id="lang" name="lang"></select>
+        <button type="submit" class="btn primary">Suchen</button>
+      </form>
+      <p class="results-meta" id="results-meta" aria-live="polite"></p>
+      <ul class="results" id="results"></ul>
+      <button type="button" class="btn quiet more" id="more" hidden>Weitere Treffer laden</button>
+      <div class="empty-hint" id="search-empty">
+        <p>Such nach Artikeln, hak an, was ins Buch soll, und übernimm sie in den Sammelband.</p>
+      </div>
+    </section>
+
+    <!-- Bibliothek -->
+    <section id="view-library" class="view" hidden>
+      <h1 class="view-title">Bibliothek</h1>
+      <p class="empty-hint" id="library-empty" hidden>Noch keine ePubs. Stell auf der Suchseite einen Sammelband zusammen und erstell daraus das erste Buch.</p>
+      <ul class="shelf" id="shelf"></ul>
+    </section>
+
+    <!-- Einstellungen -->
+    <section id="view-settings" class="view" hidden>
+      <h1 class="view-title">Einstellungen</h1>
+      <form id="settings-form" class="settings">
+        <fieldset>
+          <legend>Sprachen in der Suche</legend>
+          <p class="help">Code wie in der Wikipedia-Adresse, z.&nbsp;B. <b>de</b> für de.wikipedia.org. Die markierte Sprache ist beim Öffnen vorausgewählt.</p>
+          <ol class="lang-editor" id="lang-editor"></ol>
+          <button type="button" class="btn quiet" id="lang-add">Sprache hinzufügen</button>
+        </fieldset>
+        <fieldset>
+          <legend>Senden an den Reader</legend>
+          <label class="field">
+            <span>E-Mail-Adresse des Readers</span>
+            <input type="email" id="reader-email" placeholder="name@pbsync.com" autocomplete="off">
+          </label>
+          <p class="help" id="smtp-status"></p>
+        </fieldset>
+        <div class="settings-actions">
+          <button type="submit" class="btn primary">Einstellungen speichern</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Sammelband -->
+  <aside class="stack" id="stack" aria-labelledby="stack-heading">
+    <button type="button" class="stack-handle" id="stack-handle" aria-expanded="false" aria-controls="stack-body">
+      <span>Sammelband</span><span class="count" id="stack-count">leer</span>
+    </button>
+    <div class="stack-body" id="stack-body">
+      <h2 id="stack-heading">Sammelband</h2>
+      <label class="field">
+        <span>Buchtitel</span>
+        <input type="text" id="book-title" placeholder="Leer lassen für automatischen Titel" maxlength="150">
+      </label>
+      <ol class="stack-list" id="stack-list"></ol>
+      <p class="stack-empty" id="stack-empty">Noch keine Artikel übernommen.</p>
+      <label class="check">
+        <input type="checkbox" id="with-images" checked>
+        <span>Bilder einbinden</span>
+      </label>
+      <button type="button" class="btn primary wide" id="build">ePub erstellen</button>
+      <div class="build-status" id="build-status" aria-live="polite" hidden></div>
+    </div>
+  </aside>
+</div>
+
+<!-- Auswahlleiste -->
+<div class="pickbar" id="pickbar" hidden>
+  <span id="pick-count"></span>
+  <button type="button" class="btn quiet" id="pick-clear"><span class="long">Markierung aufheben</span><span class="short">Aufheben</span></button>
+  <button type="button" class="btn primary" id="pick-take">Übernehmen</button>
+</div>
+
+<!-- Artikelvorschau -->
+<dialog class="preview" id="preview" aria-labelledby="preview-title">
+  <div class="preview-bar">
+    <button type="button" class="btn quiet icon" id="preview-back" aria-label="Zurück zum vorherigen Artikel" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="preview-heading">
+      <h2 id="preview-title"></h2>
+      <a id="preview-source" target="_blank" rel="noopener">auf Wikipedia öffnen</a>
+    </div>
+    <button type="button" class="btn primary" id="preview-toggle"></button>
+    <button type="button" class="btn quiet icon" id="preview-close" aria-label="Vorschau schließen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <article class="prose" id="preview-body"></article>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/static/app.js" type="module"></script>
+</body>
+</html>

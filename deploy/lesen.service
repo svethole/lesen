@@ -1,0 +1,25 @@
+[Unit]
+Description=Lesen – Wikipedia-Artikel als ePub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Benutzer und Pfade an den eigenen Server anpassen
+User=lesen
+Group=lesen
+WorkingDirectory=/opt/lesen
+Environment=LESEN_CONFIG=/opt/lesen/config.toml
+# Nur ein Worker: die Fortschrittsanzeige der ePub-Aufträge liegt im Arbeitsspeicher
+ExecStart=/opt/lesen/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8077 --proxy-headers
+Restart=on-failure
+RestartSec=5
+
+# Etwas Abschottung
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/lesen/data
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

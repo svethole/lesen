@@ -1,0 +1,147 @@
+/* Lesemodus: alles dreht sich um gut lesbaren, großen Text. */
+:root {
+  --bg: #f6f4ee;
+  --fg: #22262a;
+  --font: "Literata", Georgia, serif;
+  --size: 22px;
+  --lh: 1.6;
+  --measure: 36em;
+  --pad: 1.25rem;
+  --ui: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --soft: color-mix(in srgb, var(--fg) 60%, var(--bg));
+  --line: color-mix(in srgb, var(--fg) 18%, var(--bg));
+  --panel: color-mix(in srgb, var(--fg) 5%, var(--bg));
+  --accent: color-mix(in srgb, #2f6b55 70%, var(--fg));
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 4.5rem; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--ui);
+  transition: background-color 0.2s, color 0.2s;
+}
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* ---------- Kopfleiste ---------- */
+.bar {
+  position: fixed; inset: 0 0 auto 0; z-index: 10;
+  display: flex; align-items: center; gap: 0.25rem;
+  padding: calc(0.4rem + env(safe-area-inset-top)) 0.5rem 0.4rem;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  transition: transform 0.25s ease-out;
+}
+.bar.hidden { transform: translateY(-110%); }
+.bar-title { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; padding: 0 0.25rem; }
+.bar-title span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#book-title { font-size: 0.8rem; color: var(--soft); }
+#chapter-title { font-weight: 700; font-size: 1rem; }
+.icon-btn {
+  flex: none; width: 3rem; height: 3rem; border: 0; background: none; color: var(--fg);
+  display: grid; place-content: center; border-radius: 50%; cursor: pointer; text-decoration: none;
+}
+.icon-btn:hover { background: var(--panel); }
+.icon-btn svg { width: 1.6rem; height: 1.6rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-btn.text { font: 700 1.3rem var(--book, var(--font)); font-family: Georgia, serif; }
+
+/* ---------- Text ---------- */
+main { padding: calc(4.5rem + env(safe-area-inset-top)) var(--pad) 4rem; }
+.text, .chapter-nav { max-width: var(--measure); margin: 0 auto; }
+.text {
+  font-family: var(--font); font-size: var(--size); line-height: var(--lh);
+  overflow-wrap: break-word;
+}
+.text.justify { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+.text h1 { font-size: 1.55em; line-height: 1.2; margin: 0.4em 0 0.8em; text-align: left; }
+.text h2 { font-size: 1.25em; line-height: 1.25; margin: 1.6em 0 0.5em; text-align: left; }
+.text h3 { font-size: 1.1em; margin: 1.4em 0 0.4em; text-align: left; }
+.text h4, .text h5, .text h6 { font-size: 1em; margin: 1.2em 0 0.3em; text-align: left; }
+.text p { margin: 0 0 0.85em; }
+.text ul, .text ol { padding-left: 1.3em; margin: 0.3em 0 1em; }
+.text li { margin-bottom: 0.3em; }
+.text dt { font-weight: 700; margin-top: 0.6em; }
+.text dd { margin: 0 0 0.4em 1em; }
+.text blockquote { margin: 1em 0; padding-left: 1em; border-left: 3px solid var(--line); font-style: italic; }
+.text a { color: inherit; text-decoration-color: var(--soft); text-underline-offset: 0.15em; }
+.text a[data-chapter] { color: var(--accent); }
+.text .figure { margin: 1.4em 0; text-align: center; }
+.text .figure img { max-width: 100%; max-height: 75vh; width: auto; height: auto; border-radius: 3px; }
+.text .caption { font-size: 0.8em; color: var(--soft); margin: 0.4em 0 0; text-align: center; font-style: italic; hyphens: manual; }
+.text code.math { font-size: 0.8em; }
+.text .lang { font-size: 0.75em; color: var(--soft); margin-top: -0.5em; }
+.text .source {
+  font-family: var(--ui); font-size: max(0.6em, 15px); line-height: 1.45; color: var(--soft);
+  margin-top: 3em; padding-top: 0.75em; border-top: 1px solid var(--line); text-align: left; hyphens: manual;
+  overflow-wrap: anywhere;
+}
+.text .titlepage { text-align: center; }
+.text .loading { color: var(--soft); font-family: var(--ui); font-size: 1.1rem; }
+/* Dunkle Hintergründe: Bilder etwas zurücknehmen */
+.dim-images .text img { filter: brightness(0.82); }
+
+/* ---------- Kapitelwechsel ---------- */
+.chapter-nav { display: grid; gap: 0.75rem; margin-top: 3rem; padding-bottom: env(safe-area-inset-bottom); }
+.chapter-nav a {
+  display: block; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 12px;
+  text-decoration: none; color: var(--fg); background: var(--panel);
+}
+.chapter-nav a small { display: block; color: var(--soft); font-size: 0.9rem; }
+.chapter-nav a strong { font-family: var(--font); font-size: 1.35rem; }
+.chapter-nav .next { text-align: right; }
+
+/* ---------- Fortschritt ---------- */
+.progress { position: fixed; left: 0; right: 0; bottom: 0; height: 3px; background: transparent; z-index: 9; }
+.progress div { height: 100%; width: 0; background: var(--soft); opacity: 0.6; }
+
+/* ---------- Seitenblätter (Inhalt, Darstellung) ---------- */
+.scrim { position: fixed; inset: 0; z-index: 19; background: rgb(0 0 0 / 0.35); }
+.sheet {
+  position: fixed; z-index: 20; left: 0; right: 0; bottom: 0;
+  max-height: 85vh; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bg); color: var(--fg);
+  border-top: 1px solid var(--line); border-radius: 16px 16px 0 0;
+  padding: 0 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 30px rgb(0 0 0 / 0.25);
+  font-size: 1.1rem;
+}
+@media (min-width: 720px) {
+  .sheet { left: auto; top: 0; width: 26rem; max-height: none; border-radius: 0; border-top: 0; border-left: 1px solid var(--line); }
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); padding: 0.75rem 0 0.5rem; }
+.sheet h2 { margin: 0; font-size: 1.3rem; }
+
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li > a { display: block; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--line); text-decoration: none; color: var(--fg); font-family: var(--font); font-weight: 700; }
+.toc li > a[aria-current="true"] { color: var(--accent); }
+.toc li ol a { font-weight: 400; padding: 0.55rem 0.5rem 0.55rem 1.5rem; font-size: 0.95rem; border-bottom: 0; }
+
+.settings .row { padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+.settings .row.two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.settings .label { display: block; font-size: 0.9rem; color: var(--soft); margin-bottom: 0.5rem; }
+.sizer { display: flex; align-items: center; gap: 0.75rem; }
+.sizer input { flex: 1; accent-color: var(--accent); height: 2.5rem; }
+.step {
+  width: 3rem; height: 3rem; flex: none; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--panel); color: var(--fg); font: 700 1rem Georgia, serif; cursor: pointer;
+}
+.step.big { font-size: 1.6rem; }
+.choices { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.choice {
+  border: 2px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 10px;
+  padding: 0.5rem 0.75rem; min-height: 3rem; cursor: pointer; font: inherit; font-size: 1rem;
+}
+.choice[aria-checked="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.fonts .choice { flex: 1 1 45%; text-align: left; line-height: 1.2; }
+.fonts .choice span { display: block; font-size: 1.5rem; }
+.fonts .choice small { font-family: var(--ui); color: var(--soft); font-size: 0.8rem; }
+.swatches { gap: 0.4rem; }
+.swatches .choice { width: 2.9rem; height: 2.9rem; min-height: 0; padding: 0; border-radius: 50%; font-family: Georgia, serif; font-size: 1.1rem; }
+.custom-color { display: inline-flex; align-items: center; gap: 0.6rem; margin-top: 0.75rem; cursor: pointer; font-size: 1rem; }
+.custom-color input { width: 3rem; height: 2.4rem; border: 1px solid var(--line); border-radius: 8px; background: none; padding: 2px; }
+.toggle { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0 0.5rem; cursor: pointer; }
+.toggle input { width: 1.4rem; height: 1.4rem; accent-color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
+}

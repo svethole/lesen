@@ -1,0 +1,27 @@
+# Konfiguration für „Lesen“ – als config.toml neben diese Datei kopieren.
+# Die Datei enthält das Mail-Passwort: nicht ins Git-Repo einchecken!
+
+[general]
+# Hier landen Datenbank und ePub-Dateien (relativ zum Programmordner oder absolut)
+data_dir = "data"
+# Wikimedia verlangt einen User-Agent mit Kontaktmöglichkeit
+user_agent = "LesenEpub/1.0 (https://lesen.svetho.net; deine@adresse.de)"
+# Bildgröße im ePub (Pixel) und JPEG-Qualität
+image_max_width = 1000
+image_max_height = 1400
+jpeg_quality = 80
+
+[smtp]
+# Beispiel Fastmail: smtp.fastmail.com, Port 465, SSL, mit App-Passwort
+host = "smtp.fastmail.com"
+port = 465
+security = "ssl"          # "ssl" (465), "starttls" (587) oder "none" (lokaler Mailserver)
+user = "deine@adresse.de"
+password = "app-passwort"
+sender = "deine@adresse.de"   # muss bei PocketBook als erlaubter Absender eingetragen sein
+
+# Eigene Abschnittstitel, die zusätzlich entfernt werden sollen (je Sprachcode).
+# Die üblichen (Einzelnachweise, Weblinks, Literatur, Siehe auch …) sind schon eingebaut.
+[drop_sections]
+# de = ["Filmografie", "Diskografie"]
+# cs = ["Galerie"]

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lesen</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/fonts.css">
+<link rel="stylesheet" href="/static/reader.css">
+<meta name="theme-color" content="#f6f4ee" id="theme-color">
+<script>
+  // Einstellungen vor dem ersten Zeichnen anwenden (kein Aufblitzen)
+  try {
+    const s = JSON.parse(localStorage.getItem("lesen.reader") || "{}");
+    if (s.bg) { document.documentElement.style.setProperty("--bg", s.bg); document.documentElement.style.setProperty("--fg", s.fg); }
+  } catch (e) {}
+</script>
+</head>
+<body>
+<header class="bar" id="bar">
+  <a class="icon-btn" href="/#/bibliothek" aria-label="Zur Bibliothek">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+  </a>
+  <div class="bar-title">
+    <span id="book-title"></span>
+    <span id="chapter-title"></span>
+  </div>
+  <button type="button" class="icon-btn" id="open-toc" aria-label="Inhaltsverzeichnis" aria-controls="toc" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>
+  </button>
+  <button type="button" class="icon-btn text" id="open-settings" aria-label="Darstellung anpassen" aria-controls="settings" aria-expanded="false">Aa</button>
+</header>
+
+<main id="page">
+  <article class="text" id="text" aria-live="polite"></article>
+  <nav class="chapter-nav" id="chapter-nav" aria-label="Kapitel wechseln"></nav>
+</main>
+
+<div class="progress" aria-hidden="true"><div id="progress-bar"></div></div>
+
+<!-- Inhaltsverzeichnis -->
+<aside class="sheet toc" id="toc" hidden aria-label="Inhaltsverzeichnis">
+  <div class="sheet-head">
+    <h2>Inhalt</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Schließen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <ol id="toc-list"></ol>
+</aside>
+
+<!-- Darstellung -->
+<aside class="sheet settings" id="settings" hidden aria-label="Darstellung">
+  <div class="sheet-head">
+    <h2>Darstellung</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Schließen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <div class="row">
+    <span class="label">Schriftgröße</span>
+    <div class="sizer">
+      <button type="button" class="step" id="size-down" aria-label="Kleiner">A</button>
+      <input type="range" id="size" min="16" max="48" step="1" aria-label="Schriftgröße">
+      <button type="button" class="step big" id="size-up" aria-label="Größer">A</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="label">Schrift</span>
+    <div class="choices fonts" id="fonts" role="radiogroup" aria-label="Schrift"></div>
+  </div>
+
+  <div class="row">
+    <span class="label">Hintergrund</span>
+    <div class="choices swatches" id="themes" role="radiogroup" aria-label="Hintergrund"></div>
+    <label class="custom-color">
+      <input type="color" id="custom-bg" value="#f6f4ee">
+      <span>Eigene Farbe</span>
+    </label>
+  </div>
+
+  <div class="row two">
+    <div>
+      <span class="label">Zeilenabstand</span>
+      <div class="choices" id="lineheights" role="radiogroup" aria-label="Zeilenabstand"></div>
+    </div>
+    <div>
+      <span class="label">Seitenrand</span>
+      <div class="choices" id="margins" role="radiogroup" aria-label="Seitenrand"></div>
+    </div>
+  </div>
+
+  <label class="toggle">
+    <input type="checkbox" id="justify">
+    <span>Blocksatz mit Silbentrennung</span>
+  </label>
+</aside>
+
+<div class="scrim" id="scrim" hidden></div>
+
+<script src="/static/reader.js" type="module"></script>
+</body>
+</html>

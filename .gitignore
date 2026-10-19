@@ -1,0 +1,6 @@
+config.toml
+data/
+tests/out/
+__pycache__/
+*.pyc
+.venv/
