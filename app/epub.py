@@ -26,7 +26,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .cleaner import XHTML_NS, clean_article, norm_title
 from .config import CONFIG
-from .images import ConvertedImage, fetch_image, make_client
+from .images import ConvertedImage, convert_image, fetch_image, make_client
 from .wiki import Article
 
 EPUB_NS = "http://www.idpf.org/2007/ops"
@@ -59,7 +59,9 @@ pre { white-space: pre-wrap; font-size: 0.85em; }
 code.math { font-family: monospace; font-size: 0.9em; }
 a { color: inherit; text-decoration: underline; }
 div.figure { margin: 1em 0; text-align: center; page-break-inside: avoid; }
-div.figure img { max-width: 100%; height: auto; }
+/* Bilder klein halten: etwa drei bis vier passen auf eine Reader-Seite.
+   em für ältere Lese-Engines, vh für neuere (die das em-Maß überschreiben). */
+div.figure img { max-width: 100%; max-height: 13em; max-height: 26vh; width: auto; height: auto; }
 p.caption { font-size: 0.85em; font-style: italic; text-align: center; margin: 0.3em 0 0 0; }
 p.lang { font-size: 0.8em; margin: -0.5em 0 1.2em 0; }
 p.source { font-size: 0.75em; margin-top: 2.5em; padding-top: 0.5em; border-top: 1px solid #888; }
@@ -299,50 +301,74 @@ async def build_epub(articles: list[Article], title: str, out_path: Path, *,
         done = 0
         sem = asyncio.Semaphore(4)
         client = None if image_fetcher else make_client()
-        url_cache: dict[str, tuple[str, ConvertedImage] | None] = {}
-        lock = asyncio.Lock()
+        converted: dict[str, ConvertedImage | None] = {}   # URL -> Bild
+        inflight: dict[str, asyncio.Future] = {}
+        unique_urls: list[str] = []
+
+        async def load(ref) -> None:
+            if image_fetcher:
+                conv = await image_fetcher(ref.url, ref.fallback)
+            else:
+                conv = await fetch_image(client, ref.url, ref.fallback)
+            converted[ref.url] = conv
 
         async def work(ref):
             nonlocal done
-            async with sem:
-                async with lock:
-                    known = ref.url in url_cache
-                if known:
-                    res = url_cache[ref.url]
-                else:
-                    if image_fetcher:
-                        conv = await image_fetcher(ref.url, ref.fallback)
-                    else:
-                        conv = await fetch_image(client, ref.url, ref.fallback)
-                    async with lock:
-                        if ref.url in url_cache:
-                            res = url_cache[ref.url]
-                        elif conv is None:
-                            res = url_cache[ref.url] = None
-                        else:
-                            name = f"img{len(image_files) + 1:04d}.{conv.ext}"
-                            image_files.append((name, conv))
-                            res = url_cache[ref.url] = (name, conv)
-                done += 1
-                if done % 3 == 0 or done == total:
-                    await _call(progress, f"Lade Bilder: {done} von {total}")
-                return ref, res
+            if ref.url not in inflight:
+                unique_urls.append(ref.url)
+
+                async def guarded(r=ref):
+                    async with sem:
+                        await load(r)
+                inflight[ref.url] = asyncio.ensure_future(guarded())
+            await inflight[ref.url]
+            done += 1
+            if done % 3 == 0 or done == total:
+                await _call(progress, f"Lade Bilder: {done} von {total}")
 
         try:
-            results = await asyncio.gather(*(work(ref) for _, ref in pending_images))
+            await asyncio.gather(*(work(ref) for _, ref in pending_images))
         finally:
             if client is not None:
                 await client.aclose()
+
+        # Gesamtgröße begrenzen: bei Bedarf alle Bilder kleiner und stärker komprimiert
+        loaded = [u for u in unique_urls if converted.get(u) is not None]
+        budget = max(0, int(CONFIG.max_epub_mb * 1024 * 1024) - 400 * 1024)  # Platz für Text + Titelbild
+        if loaded and budget:
+            await _call(progress, "Verkleinere Bilder …")
+            for quality, scale in ((None, 1.0), (65, 0.85), (60, 0.7), (55, 0.58), (50, 0.48), (45, 0.4)):
+                size = sum(len(converted[u].data) for u in loaded)
+                if size <= budget:
+                    break
+                for u in loaded:
+                    src = converted[u]
+                    converted[u] = await asyncio.to_thread(
+                        convert_image, src.source,
+                        max(160, int(CONFIG.image_max_width * scale)),
+                        max(120, int(CONFIG.image_max_height * scale)),
+                        quality)
+            size = sum(len(converted[u].data) for u in loaded)
+            if size > budget:
+                warnings.append("Das Buch ist trotz verkleinerter Bilder größer als "
+                                f"{CONFIG.max_epub_mb:g} MB – eventuell ohne Bilder erstellen.")
+
+        names: dict[str, str] = {}
+        for u in loaded:
+            conv = converted[u]
+            name = f"img{len(image_files) + 1:04d}.{conv.ext}"
+            names[u] = name
+            image_files.append((name, conv))
+
         failed = 0
-        for ref, res in results:
-            if res is None:
-                _remove_img(ref.element)
-                failed += 1
-            else:
-                name, conv = res
-                ref.element.set("src", f"../images/{name}")
+        for _, ref in pending_images:
+            if ref.url in names:
+                ref.element.set("src", f"../images/{names[ref.url]}")
                 if not ref.element.get("alt"):
                     ref.element.set("alt", "")
+            else:
+                _remove_img(ref.element)
+                failed += 1
         if failed:
             warnings.append(f"{failed} Bild(er) konnten nicht geladen werden und wurden weggelassen.")
 

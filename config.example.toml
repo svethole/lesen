@@ -6,10 +6,13 @@
 data_dir = "data"
 # Wikimedia verlangt einen User-Agent mit Kontaktmöglichkeit
 user_agent = "LesenEpub/1.0 (https://lesen.svetho.net; deine@adresse.de)"
-# Bildgröße im ePub (Pixel) und JPEG-Qualität
-image_max_width = 1000
-image_max_height = 1400
-jpeg_quality = 80
+# Bildgröße im ePub (Pixel) und JPEG-Qualität – so passen etwa 3–4 Bilder auf eine Seite
+image_max_width = 600
+image_max_height = 450
+jpeg_quality = 72
+# Höchstgröße eines ePubs in MB (Mailanhang!). Wird sie überschritten,
+# werden alle Bilder automatisch weiter verkleinert.
+max_epub_mb = 3
 
 [smtp]
 # Beispiel Fastmail: smtp.fastmail.com, Port 465, SSL, mit App-Passwort

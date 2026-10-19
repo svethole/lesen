@@ -28,9 +28,12 @@ class Config:
     data_dir: Path = BASE_DIR / "data"
     # Wikimedia verlangt einen aussagekräftigen User-Agent mit Kontaktmöglichkeit.
     user_agent: str = "LesenEpub/1.0 (privates Projekt; https://lesen.svetho.net)"
-    image_max_width: int = 1000
-    image_max_height: int = 1400
-    jpeg_quality: int = 80
+    # Bildgröße im ePub: so, dass etwa 3–4 Bilder auf eine Reader-Seite passen
+    image_max_width: int = 600
+    image_max_height: int = 450
+    jpeg_quality: int = 72
+    # Obergrenze für ein ePub; reicht der Platz nicht, werden alle Bilder kleiner
+    max_epub_mb: float = 3.0
     smtp: SmtpConfig = field(default_factory=SmtpConfig)
     # Zusätzliche Abschnittstitel je Sprache, die entfernt werden sollen
     # (ergänzt die eingebauten Listen in cleaner.py).
@@ -49,7 +52,7 @@ def load_config() -> Config:
     if "data_dir" in general:
         p = Path(general["data_dir"])
         cfg.data_dir = p if p.is_absolute() else BASE_DIR / p
-    for key in ("user_agent", "image_max_width", "image_max_height", "jpeg_quality"):
+    for key in ("user_agent", "image_max_width", "image_max_height", "jpeg_quality", "max_epub_mb"):
         if key in general:
             setattr(cfg, key, general[key])
 

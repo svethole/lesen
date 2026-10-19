@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import io
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 from PIL import Image, ImageOps
@@ -21,6 +21,7 @@ class ConvertedImage:
     media_type: str
     width: int
     height: int
+    source: bytes = field(default=b"", repr=False)  # Original zum erneuten Verkleinern
 
 
 def convert_image(raw: bytes, max_w: int | None = None, max_h: int | None = None,
@@ -55,11 +56,11 @@ def convert_image(raw: bytes, max_w: int | None = None, max_h: int | None = None
         if im.mode == "RGB":
             im = im.quantize(colors=256, method=Image.Quantize.MEDIANCUT)
         im.save(out, "PNG", optimize=True)
-        return ConvertedImage(out.getvalue(), "png", "image/png", im.width, im.height)
+        return ConvertedImage(out.getvalue(), "png", "image/png", im.width, im.height, raw)
     if im.mode not in ("RGB", "L"):
         im = im.convert("RGB")
     im.save(out, "JPEG", quality=quality, optimize=True, progressive=False)
-    return ConvertedImage(out.getvalue(), "jpg", "image/jpeg", im.width, im.height)
+    return ConvertedImage(out.getvalue(), "jpg", "image/jpeg", im.width, im.height, raw)
 
 
 def make_client() -> httpx.AsyncClient:
