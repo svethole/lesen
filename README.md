@@ -24,7 +24,7 @@ Entfernt werden: Bearbeiten-Links, Einzelnachweise und Fußnotenzeichen, Literat
 
 ## Installation auf dem Server
 
-Voraussetzung: Python 3.11 oder neuer, nginx, certbot.
+Voraussetzung: Python 3.11 oder neuer, nginx, certbot (Debian 12/13: `sudo apt install git python3-venv apache2-utils certbot python3-certbot-nginx`) und ein DNS-Eintrag für die Subdomain.
 
 ```bash
 # Programm holen
@@ -54,8 +54,10 @@ systemctl status lesen
 sudo htpasswd -c /etc/nginx/.htpasswd-lesen DEINNAME
 sudo cp deploy/nginx-lesen.conf /etc/nginx/sites-available/lesen.svetho.net
 sudo ln -s /etc/nginx/sites-available/lesen.svetho.net /etc/nginx/sites-enabled/
-sudo certbot certonly --nginx -d lesen.svetho.net
 sudo nginx -t && sudo systemctl reload nginx
+
+# HTTPS: certbot ergänzt Zertifikat und Weiterleitung selbst in der nginx-Datei
+sudo certbot --nginx -d lesen.svetho.net
 ```
 
 Aktualisieren: `cd /opt/lesen && sudo git pull && sudo .venv/bin/pip install -r requirements.txt && sudo systemctl restart lesen`
