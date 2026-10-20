@@ -296,6 +296,24 @@ def _best_image_url(img) -> tuple[str, str]:
     return best, src
 
 
+def _display_size(img, url: str) -> tuple[int, int] | None:
+    """Pixelmaße des Bildes unter `url` (aus dem Thumbnail-Namen und dem
+    Seitenverhältnis des Originals)."""
+    def num(v):
+        try:
+            return int(float(v))
+        except (TypeError, ValueError):
+            return 0
+    w, h = num(img.get("width")), num(img.get("height"))
+    if not (w and h):
+        w, h = num(img.get("data-file-width")), num(img.get("data-file-height"))
+    if not (w and h):
+        return None
+    m = _THUMB_RE.search(url)
+    target_w = int(m.group(1)) if m else w
+    return target_w, max(1, round(target_w * h / w))
+
+
 def _is_icon(img) -> bool:
     def num(v):
         try:
@@ -336,6 +354,11 @@ class _Builder:
         if self.mode == "preview":
             el.set("src", url)
             el.set("loading", "lazy")
+            # Feste Maße, damit der Text beim Nachladen der Bilder nicht springt
+            dims = _display_size(img, url)
+            if dims:
+                el.set("width", str(dims[0]))
+                el.set("height", str(dims[1]))
         else:
             el.set("src", "")  # wird vom ePub-Bauer gesetzt
             self.images.append(ImageRef(url=url, fallback=fallback, alt=alt, element=el))

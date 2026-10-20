@@ -6,7 +6,8 @@ Wikipedia-Artikel suchen, zu einem Sammelband zusammenstellen und als ePub für 
 - **Vorschau** jedes Artikels im Overlay, so wie er später im Buch steht; Links darin öffnen weitere Artikel
 - **Sammelband** mit Reihenfolge, Buchtitel und Bildern ein/aus
 - **Bibliothek** aller erstellten ePubs, neueste zuerst: herunterladen, per E-Mail an den Reader schicken, im Browser lesen
-- **Lesemodus** fürs Handy: Schriftart, Schriftgröße bis 48 px, Hintergrund (auch eigene Farbe), Zeilenabstand, Seitenrand, Blocksatz; die Leseposition wird gemerkt
+- **Lesemodus** fürs Handy: Schriftart, Schriftgröße bis 48 px, Hintergrund (auch eigene Farbe und das warme „Glut“ für die Nacht), zusätzliches Abdunkeln unter die geringste Bildschirmhelligkeit, Zeilenabstand, Seitenrand, Blocksatz; die Leseposition wird gemerkt
+- **Wikipedia lesen** unter `/wiki`: Artikel direkt suchen und bereinigt im Lesemodus lesen – mit Verlauf (inkl. Leseposition), Favoriten, Inhaltsverzeichnis, denselben Artikel in den anderen eingestellten Sprachen, zufälligem Artikel und „In den Sammelband“. Verlauf und Favoriten liegen auf dem Server, Handy und Rechner sehen also dasselbe. Die Darstellung teilt sich der Wikipedia-Lesemodus mit dem ePub-Reader.
 
 ## Was beim ePub beachtet wird
 
@@ -89,6 +90,9 @@ Aufbau:
 | `app/main.py` | Web-Schnittstelle (FastAPI) |
 | `app/db.py` | SQLite: Bibliothek und Einstellungen |
 | `app/mailer.py` | Versand per SMTP |
-| `static/` | Oberfläche und Lesemodus |
+| `static/index.html`, `app.js` | Suche, Sammelband, Bibliothek, Einstellungen |
+| `static/reader-common.js` | gemeinsame Darstellungs-Einstellungen beider Lesemodi |
+| `static/reader.*` | Lesemodus für erstellte ePubs |
+| `static/wiki.*` | Wikipedia-Lesemodus mit Verlauf und Favoriten |
 
 Die Texte der Wikipedia stehen unter CC BY-SA 4.0; jedes Kapitel nennt am Ende Quelle, Version und Link.

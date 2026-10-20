@@ -47,7 +47,16 @@ async def fake_fetch(lang, title):
         raise WikiError("Artikel „Gibt es nicht“ nicht gefunden.")
     base = CS if lang == "cs" else DE
     html = base.replace("Ulmer Münster", title) if lang != "cs" else base.replace("Praha", title)
-    return Article(lang=lang, title=title, revid=random.randint(1000, 99999), html=html)
+    if title == "Ulmer Muenster":  # Weiterleitung
+        title = "Ulmer Münster"
+    links = [{"lang": "cs", "title": "Ulmský chrám", "autonym": "čeština"},
+             {"lang": "da", "title": "Ulm Minster", "autonym": "dansk"},
+             {"lang": "en", "title": "Ulm Minster", "autonym": "English"}]
+    return Article(lang=lang, title=title, revid=random.randint(1000, 99999), html=html, langlinks=links)
+
+
+async def fake_random(lang):
+    return random.choice(TITLES.get(lang, TITLES["de"]))[0]
 
 
 async def fake_image(client, url, fallback):
@@ -70,6 +79,7 @@ class _DummyClient:
 
 main.search = fake_search
 main.fetch_article = fake_fetch
+main.random_title = fake_random
 epub_mod.fetch_image = fake_image
 epub_mod.make_client = lambda: _DummyClient()
 

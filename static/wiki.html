@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wikipedia lesen</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/fonts.css">
+<link rel="stylesheet" href="/static/reader.css">
+<meta name="theme-color" content="#f6f4ee" id="theme-color">
+<script>
+  // Einstellungen vor dem ersten Zeichnen anwenden (kein helles Aufblitzen in der Nacht)
+  try {
+    const s = JSON.parse(localStorage.getItem("lesen.reader") || "{}");
+    const r = document.documentElement.style;
+    if (s.bg) { r.setProperty("--bg", s.bg); r.setProperty("--fg", s.fg); }
+    if (s.size) r.setProperty("--size", s.size + "px");
+    if (s.dim) r.setProperty("--dim", s.dim);
+  } catch (e) {}
+</script>
+</head>
+<body class="wiki">
+
+<!-- Startseite -->
+<div id="home" hidden>
+  <header class="home-head">
+    <h1>Wikipedia lesen</h1>
+    <button type="button" class="icon-btn text" aria-label="Darstellung anpassen" aria-controls="settings" aria-expanded="false">Aa</button>
+  </header>
+
+  <form class="home-search" id="search-form" role="search">
+    <label class="sr-only" for="q">Wikipedia durchsuchen</label>
+    <input type="search" id="q" placeholder="Artikel suchen" autocomplete="off" enterkeyhint="search" required>
+    <label class="sr-only" for="lang">Sprache</label>
+    <select id="lang"></select>
+  </form>
+  <p class="home-meta" id="results-meta" aria-live="polite"></p>
+  <ul class="entries" id="results"></ul>
+  <button type="button" class="pill-btn" id="more" hidden>Weitere Treffer</button>
+
+  <nav class="home-tabs" role="tablist" aria-label="Listen">
+    <button type="button" role="tab" id="tab-history" aria-controls="list-history" aria-selected="true">Verlauf</button>
+    <button type="button" role="tab" id="tab-favorites" aria-controls="list-favorites" aria-selected="false">Favoriten</button>
+  </nav>
+  <section id="list-history" role="tabpanel" aria-labelledby="tab-history">
+    <ul class="entries" id="history"></ul>
+    <p class="empty" id="history-empty" hidden>Noch nichts gelesen. Such oben nach einem Artikel – oder lass Dich überraschen.</p>
+    <button type="button" class="pill-btn quiet" id="history-clear" hidden>Verlauf löschen</button>
+  </section>
+  <section id="list-favorites" role="tabpanel" aria-labelledby="tab-favorites" hidden>
+    <ul class="entries" id="favorites"></ul>
+    <p class="empty" id="favorites-empty" hidden>Noch keine Favoriten. Im Artikel oben auf den Stern tippen, um ihn hier zu sammeln.</p>
+  </section>
+
+  <footer class="home-foot">
+    <button type="button" class="pill-btn" id="random">Zufälliger Artikel</button>
+    <a href="/">Sammelband und Bibliothek</a>
+  </footer>
+</div>
+
+<!-- Artikel -->
+<div id="article" hidden>
+  <header class="bar" id="bar">
+    <a class="icon-btn" href="/wiki" data-nav aria-label="Suche, Verlauf und Favoriten">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+    </a>
+    <div class="bar-title">
+      <span id="article-lang"></span>
+      <span id="article-title"></span>
+    </div>
+    <button type="button" class="icon-btn star" id="fav" aria-pressed="false" aria-label="Als Favorit merken">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>
+    </button>
+    <button type="button" class="icon-btn" aria-label="Inhalt und Sprachen" aria-controls="toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>
+    </button>
+    <button type="button" class="icon-btn text" aria-label="Darstellung anpassen" aria-controls="settings" aria-expanded="false">Aa</button>
+  </header>
+
+  <main>
+    <article class="text" id="text"></article>
+    <div class="article-end" id="article-end" hidden></div>
+  </main>
+  <div class="progress" aria-hidden="true"><div id="progress-bar"></div></div>
+</div>
+
+<!-- Inhalt, Sprachen, Aktionen -->
+<aside class="sheet toc" id="toc" hidden aria-label="Inhalt">
+  <div class="sheet-head">
+    <h2>Inhalt</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Schließen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <ol id="toc-list"></ol>
+  <div id="toc-langs"></div>
+  <div class="sheet-actions" id="toc-actions"></div>
+</aside>
+
+<aside class="sheet settings" id="settings" hidden aria-label="Darstellung"></aside>
+<div class="scrim" id="scrim" hidden></div>
+
+<div class="resume" id="resume" role="status" hidden></div>
+
+<script src="/static/wiki.js" type="module"></script>
+</body>
+</html>

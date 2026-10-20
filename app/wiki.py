@@ -4,7 +4,7 @@ from __future__ import annotations
 import html
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from urllib.parse import quote
 
 import httpx
@@ -22,6 +22,8 @@ class Article:
     title: str
     revid: int
     html: str
+    # Andere Sprachversionen: [{"lang": "cs", "title": "…", "autonym": "čeština"}]
+    langlinks: list[dict] = field(default_factory=list)
 
     @property
     def url(self) -> str:
@@ -127,16 +129,28 @@ async def fetch_article(lang: str, title: str) -> Article:
     if hit and time.time() - hit[0] < _CACHE_TTL:
         return hit[1]
     data = await _get(lang, {
-        "action": "parse", "page": title, "prop": "text|revid", "redirects": "1",
+        "action": "parse", "page": title, "prop": "text|revid|langlinks", "redirects": "1",
         "disableeditsection": "1", "disabletoc": "1", "disablelimitreport": "1",
     })
     p = data.get("parse") or {}
     if not p.get("text"):
         raise WikiError(f"Artikel „{title}“ nicht gefunden.")
-    art = Article(lang=lang, title=p.get("title", title), revid=p.get("revid", 0), html=p["text"])
+    links = [{"lang": l.get("lang", ""), "title": l.get("title") or l.get("*", ""),
+              "autonym": l.get("autonym") or l.get("langname") or l.get("lang", "")}
+             for l in p.get("langlinks", [])]
+    art = Article(lang=lang, title=p.get("title", title), revid=p.get("revid", 0), html=p["text"],
+                  langlinks=links)
     if len(_CACHE) >= _CACHE_MAX:
         for k in sorted(_CACHE, key=lambda k: _CACHE[k][0])[: _CACHE_MAX // 3]:
             _CACHE.pop(k, None)
     _CACHE[key] = (time.time(), art)
     _CACHE[(lang, art.title)] = (time.time(), art)
     return art
+
+
+async def random_title(lang: str) -> str:
+    data = await _get(lang, {"action": "query", "list": "random", "rnnamespace": "0", "rnlimit": "1"})
+    items = data.get("query", {}).get("random", [])
+    if not items:
+        raise WikiError("Kein zufälliger Artikel gefunden.")
+    return items[0]["title"]

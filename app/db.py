@@ -60,6 +60,17 @@ def init() -> None:
                 warnings TEXT NOT NULL DEFAULT '[]',
                 sent_at TEXT
             );
+            -- Wikipedia-Lesemodus: Verlauf (last_read) und Favoriten (fav_at) in einem
+            CREATE TABLE IF NOT EXISTS reading (
+                lang TEXT NOT NULL,
+                title TEXT NOT NULL,
+                excerpt TEXT NOT NULL DEFAULT '',
+                last_read TEXT,
+                frac REAL NOT NULL DEFAULT 0,
+                fav_at TEXT,
+                PRIMARY KEY (lang, title)
+            );
+            CREATE INDEX IF NOT EXISTS reading_last ON reading(last_read);
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
@@ -134,3 +145,57 @@ def save_settings(values: dict) -> dict:
                             "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
                             (key, json.dumps(value, ensure_ascii=False)))
     return get_settings()
+
+
+# ---------------------------------------------------------------------------
+# Wikipedia-Lesemodus
+# ---------------------------------------------------------------------------
+
+def get_reading(lang: str, title: str) -> dict | None:
+    with connect() as con:
+        row = con.execute("SELECT * FROM reading WHERE lang = ? AND title = ?", (lang, title)).fetchone()
+    return dict(row) if row else None
+
+
+def touch_reading(lang: str, title: str, excerpt: str, when: str) -> dict:
+    """Artikel wurde geöffnet: in den Verlauf aufnehmen (oder nach oben schieben)."""
+    with connect() as con:
+        con.execute(
+            "INSERT INTO reading (lang, title, excerpt, last_read) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(lang, title) DO UPDATE SET last_read = excluded.last_read, "
+            "excerpt = CASE WHEN excluded.excerpt != '' THEN excluded.excerpt ELSE reading.excerpt END",
+            (lang, title, excerpt, when))
+    return get_reading(lang, title)
+
+
+def update_reading(lang: str, title: str, *, frac: float | None = None,
+                   favorite: bool | None = None, when: str = "") -> dict | None:
+    with connect() as con:
+        con.execute("INSERT OR IGNORE INTO reading (lang, title) VALUES (?, ?)", (lang, title))
+        if frac is not None:
+            con.execute("UPDATE reading SET frac = ? WHERE lang = ? AND title = ?",
+                        (max(0.0, min(1.0, frac)), lang, title))
+        if favorite is not None:
+            con.execute("UPDATE reading SET fav_at = ? WHERE lang = ? AND title = ?",
+                        (when if favorite else None, lang, title))
+        con.execute("DELETE FROM reading WHERE last_read IS NULL AND fav_at IS NULL")
+    return get_reading(lang, title)
+
+
+def list_reading(kind: str, limit: int = 200) -> list[dict]:
+    col = "fav_at" if kind == "favorites" else "last_read"
+    with connect() as con:
+        rows = con.execute(f"SELECT * FROM reading WHERE {col} IS NOT NULL ORDER BY {col} DESC LIMIT ?",
+                           (limit,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def forget_history(lang: str | None = None, title: str | None = None) -> None:
+    """Eintrag (oder ganzen Verlauf) entfernen; Favoriten bleiben erhalten."""
+    with connect() as con:
+        if lang and title:
+            con.execute("UPDATE reading SET last_read = NULL, frac = 0 WHERE lang = ? AND title = ?",
+                        (lang, title))
+        else:
+            con.execute("UPDATE reading SET last_read = NULL, frac = 0")
+        con.execute("DELETE FROM reading WHERE last_read IS NULL AND fav_at IS NULL")

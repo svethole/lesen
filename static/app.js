@@ -178,6 +178,16 @@ $("#pick-take").addEventListener("click", () => {
 // ---------------------------------------------------------------------------
 function saveStack() { store.set("stack", state.stack); }
 
+const readerPath = (lang, title) => `/wiki/${encodeURIComponent(lang)}/${encodeURIComponent(title.replace(/ /g, "_"))}`;
+
+// Der Wikipedia-Lesemodus kann in einem anderen Tab Artikel in den Sammelband legen
+addEventListener("storage", (e) => {
+  if (e.key !== "lesen.stack") return;
+  state.stack = store.get("stack", []);
+  renderStack();
+  renderResults();
+});
+
 function addToStack(items) {
   for (const it of items) if (!inStack(it)) state.stack.push({ lang: it.lang, title: it.title });
   saveStack();
@@ -321,6 +331,7 @@ async function openPreview(lang, title, { push = false, back = false } = {}) {
   $("#preview-back").hidden = preview.history.length === 0;
   $("#preview-title").textContent = title;
   $("#preview-source").href = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
+  $("#preview-read").href = readerPath(lang, title);
   $("#preview-body").innerHTML = '<p class="loading"><span class="spinner"></span>Artikel wird geladen …</p>';
   $("#preview-body").scrollTop = 0;
   updatePreviewToggle();
@@ -331,6 +342,7 @@ async function openPreview(lang, title, { push = false, back = false } = {}) {
     preview.current.title = data.title; // Weiterleitungen auflösen
     $("#preview-title").textContent = data.title;
     $("#preview-source").href = data.url;
+    $("#preview-read").href = readerPath(lang, data.title);
     $("#preview-body").innerHTML = data.html || '<p class="loading">Der Artikel ist nach der Bereinigung leer.</p>';
     $("#preview-body").lang = lang;
     updatePreviewToggle();

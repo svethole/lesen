@@ -12,7 +12,9 @@
   // Einstellungen vor dem ersten Zeichnen anwenden (kein Aufblitzen)
   try {
     const s = JSON.parse(localStorage.getItem("lesen.reader") || "{}");
-    if (s.bg) { document.documentElement.style.setProperty("--bg", s.bg); document.documentElement.style.setProperty("--fg", s.fg); }
+    const r = document.documentElement.style;
+    if (s.bg) { r.setProperty("--bg", s.bg); r.setProperty("--fg", s.fg); }
+    if (s.dim) r.setProperty("--dim", s.dim);
   } catch (e) {}
 </script>
 </head>
@@ -50,53 +52,7 @@
 </aside>
 
 <!-- Darstellung -->
-<aside class="sheet settings" id="settings" hidden aria-label="Darstellung">
-  <div class="sheet-head">
-    <h2>Darstellung</h2>
-    <button type="button" class="icon-btn" data-close aria-label="Schließen">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-    </button>
-  </div>
-
-  <div class="row">
-    <span class="label">Schriftgröße</span>
-    <div class="sizer">
-      <button type="button" class="step" id="size-down" aria-label="Kleiner">A</button>
-      <input type="range" id="size" min="16" max="48" step="1" aria-label="Schriftgröße">
-      <button type="button" class="step big" id="size-up" aria-label="Größer">A</button>
-    </div>
-  </div>
-
-  <div class="row">
-    <span class="label">Schrift</span>
-    <div class="choices fonts" id="fonts" role="radiogroup" aria-label="Schrift"></div>
-  </div>
-
-  <div class="row">
-    <span class="label">Hintergrund</span>
-    <div class="choices swatches" id="themes" role="radiogroup" aria-label="Hintergrund"></div>
-    <label class="custom-color">
-      <input type="color" id="custom-bg" value="#f6f4ee">
-      <span>Eigene Farbe</span>
-    </label>
-  </div>
-
-  <div class="row two">
-    <div>
-      <span class="label">Zeilenabstand</span>
-      <div class="choices" id="lineheights" role="radiogroup" aria-label="Zeilenabstand"></div>
-    </div>
-    <div>
-      <span class="label">Seitenrand</span>
-      <div class="choices" id="margins" role="radiogroup" aria-label="Seitenrand"></div>
-    </div>
-  </div>
-
-  <label class="toggle">
-    <input type="checkbox" id="justify">
-    <span>Blocksatz mit Silbentrennung</span>
-  </label>
-</aside>
+<aside class="sheet settings" id="settings" hidden aria-label="Darstellung"></aside>
 
 <div class="scrim" id="scrim" hidden></div>
 

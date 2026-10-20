@@ -20,7 +20,7 @@ from .cleaner import XHTML_NS, clean_article, to_html_fragment
 from .config import BASE_DIR, CONFIG
 from .epub import build_epub
 from .mailer import MailError, send_epub
-from .wiki import WikiError, fetch_article, search
+from .wiki import WikiError, fetch_article, random_title, search
 
 STATIC = BASE_DIR / "static"
 
@@ -308,6 +308,80 @@ def reader_image(book_id: int, name: str):
 
 
 # ---------------------------------------------------------------------------
+# Wikipedia-Lesemodus: Artikel, Verlauf, Favoriten
+# ---------------------------------------------------------------------------
+
+def _excerpt(body, limit: int = 180) -> str:
+    for p in body.iter(f"{{{XHTML_NS}}}p"):
+        text = re.sub(r"\s+", " ", "".join(p.itertext())).strip()
+        if len(text) > 40:
+            return text if len(text) <= limit else text[:limit].rsplit(" ", 1)[0] + " …"
+    return ""
+
+
+@app.get("/api/read")
+async def read_article(title: str, lang: str = "de"):
+    lang = valid_lang(lang)
+    try:
+        art = await fetch_article(lang, title)
+    except WikiError as exc:
+        raise HTTPException(404 if "nicht gefunden" in str(exc) else 502, str(exc))
+    result = await asyncio.to_thread(
+        clean_article, art.html, lang, mode="preview",
+        extra_drop=CONFIG.extra_drop_sections.get(lang, []))
+    state = db.touch_reading(lang, art.title, _excerpt(result.body), now_iso())
+    configured = [l["code"] for l in db.get_settings()["languages"]]
+    other = sorted((l for l in art.langlinks if l["lang"] in configured and l["lang"] != lang),
+                   key=lambda l: configured.index(l["lang"]))
+    return {
+        "title": art.title, "lang": lang, "url": art.url,
+        "html": to_html_fragment(result.body),
+        "sections": [{"id": s.id, "title": s.title, "level": s.level} for s in result.sections],
+        "langlinks": other,
+        "frac": state["frac"] if state else 0,
+        "favorite": bool(state and state["fav_at"]),
+    }
+
+
+@app.get("/api/random")
+async def api_random(lang: str = "de"):
+    try:
+        return {"title": await random_title(valid_lang(lang))}
+    except WikiError as exc:
+        raise HTTPException(502, str(exc))
+
+
+class ReadingIn(BaseModel):
+    lang: str
+    title: str
+    frac: float | None = None
+    favorite: bool | None = None
+
+
+@app.post("/api/read/state")
+def read_state(body: ReadingIn):
+    state = db.update_reading(valid_lang(body.lang), body.title, frac=body.frac,
+                              favorite=body.favorite, when=now_iso())
+    return {"favorite": bool(state and state["fav_at"]), "frac": state["frac"] if state else 0}
+
+
+@app.get("/api/read/history")
+def read_history(limit: int = 200):
+    return db.list_reading("history", min(max(limit, 1), 500))
+
+
+@app.get("/api/read/favorites")
+def read_favorites():
+    return db.list_reading("favorites", 1000)
+
+
+@app.delete("/api/read/history")
+def read_forget(lang: str | None = None, title: str | None = None):
+    db.forget_history(valid_lang(lang) if lang else None, title)
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
 # Seiten
 # ---------------------------------------------------------------------------
 
@@ -319,6 +393,12 @@ def index():
 @app.get("/lesen/{book_id}")
 def reader_page(book_id: int):
     return FileResponse(STATIC / "reader.html")
+
+
+@app.get("/wiki")
+@app.get("/wiki/{lang}/{title:path}")
+def wiki_page(lang: str = "", title: str = ""):
+    return FileResponse(STATIC / "wiki.html")
 
 
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
