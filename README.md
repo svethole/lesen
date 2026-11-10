@@ -69,6 +69,8 @@ Aktualisieren: `cd /opt/lesen && sudo git pull && sudo .venv/bin/pip install -r 
 2. Dort die Absenderadresse aus `config.toml` (`sender`) als **vertrauenswürdigen Absender** eintragen – sonst verwirft PocketBook die Mail.
 3. In „Lesen“ unter *Einstellungen* die Empfangsadresse eintragen.
 
+Klappt der Versand nicht, zeigt `python -m app.mailtest` (im Programmordner, mit `LESEN_CONFIG` wie beim Dienst) Schritt für Schritt, woran es liegt; mit `--send ADRESSE` geht zusätzlich eine Testmail raus.
+
 Für Fastmail im Abschnitt `[smtp]` ein **App-Passwort** verwenden (Einstellungen → Datenschutz & Sicherheit → App-Passwörter, Zugriff „SMTP“).
 
 ## Entwicklung

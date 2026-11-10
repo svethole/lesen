@@ -43,6 +43,9 @@ def send_epub(to_addr: str, title: str, path: Path, download_name: str) -> None:
                     s.login(smtp.user, smtp.password)
                 s.send_message(msg)
     except smtplib.SMTPAuthenticationError as exc:
-        raise MailError("Anmeldung beim Mailserver fehlgeschlagen – Benutzer/App-Passwort prüfen.") from exc
+        detail = exc.smtp_error.decode(errors="replace") if isinstance(exc.smtp_error, bytes) else str(exc.smtp_error)
+        raise MailError("Anmeldung beim Mailserver fehlgeschlagen – Benutzer/App-Passwort prüfen "
+                        f"(Server: {exc.smtp_code} {detail.strip()}). "
+                        "Genauer prüfen: python -m app.mailtest") from exc
     except (smtplib.SMTPException, OSError) as exc:
         raise MailError(f"Versand fehlgeschlagen: {exc}") from exc
