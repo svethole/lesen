@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import unicodedata
 import uuid
@@ -25,6 +26,7 @@ from .wiki import WikiError, fetch_article, random_title, search
 STATIC = BASE_DIR / "static"
 
 app = FastAPI(title="Lesen", docs_url=None, redoc_url=None)
+log = logging.getLogger("uvicorn.error")
 db.init()
 
 
@@ -246,7 +248,9 @@ async def send_book(book_id: int):
         await asyncio.to_thread(send_epub, to, book["title"], book_path(book),
                                 f"{slugify(book['title'])}.epub")
     except MailError as exc:
+        log.warning("Versand von „%s“ an %s fehlgeschlagen: %s", book["title"], to, exc)
         raise HTTPException(400, str(exc))
+    log.info("„%s“ an %s gesendet", book["title"], to)
     when = now_iso()
     db.mark_sent(book_id, when)
     return {"ok": True, "to": to, "sent_at": when}

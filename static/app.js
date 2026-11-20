@@ -50,12 +50,18 @@ function langName(code) {
 let toastTimer;
 function toast(html, { error = false, ms = 4000 } = {}) {
   const t = $("#toast");
-  t.innerHTML = html;
+  // Fehler bleiben stehen, bis man sie wegtippt – sonst sind sie weg, bevor man sie gelesen hat
+  t.innerHTML = error
+    ? `<span>${html}</span><button type="button" class="toast-close" aria-label="Meldung schließen">×</button>`
+    : html;
   t.classList.toggle("error", error);
   t.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+  if (!error) toastTimer = setTimeout(() => { t.hidden = true; }, ms);
 }
+$("#toast").addEventListener("click", (e) => {
+  if (e.target.closest(".toast-close")) $("#toast").hidden = true;
+});
 
 // ---------------------------------------------------------------------------
 // Ansichten

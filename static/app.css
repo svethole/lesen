@@ -300,7 +300,11 @@ input:hover, select:hover { border-color: var(--muted); }
   background: var(--ink); color: var(--paper); padding: 0.7rem 1.2rem; border-radius: var(--r-s);
   max-width: calc(100vw - 2rem); box-shadow: 0 6px 24px rgb(0 0 0 / 0.25);
 }
-.toast.error { background: var(--danger); color: #fff; }
+.toast.error { background: var(--danger); color: #fff; display: flex; align-items: flex-start; gap: 0.75rem; }
+.toast-close {
+  flex: none; font: 700 1.4rem/1 var(--ui); color: inherit; background: none; border: 0;
+  cursor: pointer; padding: 0 0.2rem; margin: -0.1rem -0.4rem 0 0;
+}
 .toast a { color: inherit; font-weight: 700; }
 
 /* ---------- Schmale Bildschirme ---------- */
